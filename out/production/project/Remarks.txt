@@ -1,0 +1,35 @@
+RemarksRemarks on Assignment 9 -  28.12.2016
+
+----------------
+
+CODE FIXES
+- your code for reading TGF-Files does not work for your example file "b.txt"
+    --> fix that
+
+STILL TODO:
+- rotating of the graph still needs some refinement
+    --> see corresponding Remarks in Class Presenter
+- use a FileChooser to select the TGF-File
+     --> the TGF-File is hard-coded in the class Main!!!
+     - your window is quite sparse
+          --> add a toolbar/menu offering certain functions
+          --> take care, then you have to use a SubScene containing the GraphView and the camera
+
+FUNCTIONALITY
+- BoundingBoxes are missing
+- Zooming does not work properly
+    --> see corresponding Remark
+- Rotating needs some refinement
+    --> for example, set PivotPoint of the rotation
+
+DESIGN
+- still i would recommend to create a new Class View for setting up the layout of the window as well as the camera
+    --> don't do that in the Class Main
+    --> keep the Main Class as simple as possible
+
+READABILITY
+- everything fine here
+
+----------------
+
+In total: 2/10 Points
