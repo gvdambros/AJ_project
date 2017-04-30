@@ -291,8 +291,8 @@ SEQRES  10 A  149  ASN ASN THR HIS GLU GLN HIS LEU ARG LYS SER GLU ALA
 SEQRES  11 A  149  GLN ALA LYS LYS GLU LYS LEU ASN ILE TRP SER GLU ASP          
 SEQRES  12 A  149  ASN ALA ASP SER GLY GLN                                      
 FORMUL   2  HOH   *83(H2 O1)                                                    
-HELIX    1   1 TYR A   98  ASN A   99  1                                  15    
-HELIX    2   2 VAL A   99  GLN A  100  1                                   8    
+HELIX    1   1 TYR A   54  ASN A   68  1                                  15    
+HELIX    2   2 VAL A   99  GLN A  106  1                                   8    
 HELIX    3   3 HIS A  121  GLU A  135  1                                  15    
 HELIX    4   4 LEU A  137  SER A  141  5                                   5    
 SHEET    1   A 7 LYS A  97  MET A  98  0                                        

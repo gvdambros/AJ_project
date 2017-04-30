@@ -1,4 +1,4 @@
-package graph;
+package model.sequence;
 
 import javafx.scene.paint.Color;
 
@@ -12,8 +12,6 @@ public class AtomInfo {
         C, CA, CB, N, O
     }
 
-
-    private static double baseSize = 1;
     private AtomsTypes type;
 
     public AtomInfo(String type) throws InvalidAtomType {
@@ -77,13 +75,13 @@ public class AtomInfo {
     public double getSize() {
         switch (this.type){
             case O:
-                return baseSize * .60;
+                return .60;
             case C:
             case CA:
             case CB:
-                return baseSize * .70;
+                return .70;
             case N:
-                return baseSize * .65;
+                return .65;
         }
         return 0;
     }

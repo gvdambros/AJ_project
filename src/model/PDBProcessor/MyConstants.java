@@ -1,30 +1,29 @@
-package presenter3d;
+package model.PDBProcessor;
 
 /**
  * Created by gvdambros on 1/14/17.
  */
 public final class MyConstants {
 
-    public static final int INT_SIZE = 3;
 
     public static final int OPT_BEGIN_POSITION = 0;
     public static final int OPT_END_POSITION = 6;
 
-    public static final int SEQRED_ID_POSITION = 11;
+    public static final int SEQRES_ID_POSITION = 12;
+    public static final int SEQRES_LENGTH_POSITION = 14;
     public static final int SEQRES_BEGIN_POSITION = 19;
     public static final int SEQRES_END_POSITION = 70;
     public static final int SEQRES_OFFSET = 4;
 
-    public static final int HELIX_ID_POSITION = 11;
+    public static final int HELIX_ID_POSITION = 12;
     public static final int HELIX_BEGIN_POSITION = 22;
     public static final int HELIX_END_POSITION = 34;
 
-
-    public static final int SHEET_ID_POSITION = 11;
+    public static final int STRAND_NR_POSITION = 8;
+    public static final int SHEET_LENGTH_POSITION = 15;
+    public static final int SHEET_ID_POSITION = 12;
     public static final int STRAND_BEGIN_POSITION = 23;
-    public static final int STRAND_END_POSITION = 35;
-
-    public static final int HELIX_LENGTH_POSITION = 14;
+    public static final int STRAND_END_POSITION = 34;
 
     public static final int ATOM_ID_POSITION = 7;
     public static final int ATOM_TYPE_POSITION = 13;

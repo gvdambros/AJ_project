@@ -7,10 +7,15 @@
     import javafx.animation.ScaleTransition;
     import javafx.beans.InvalidationListener;
     import javafx.beans.property.*;
+    import javafx.collections.FXCollections;
+    import javafx.collections.ObservableList;
     import javafx.geometry.Point3D;
+    import javafx.scene.Node;
     import javafx.scene.PerspectiveCamera;
+    import javafx.scene.SubScene;
+    import javafx.scene.chart.PieChart;
     import javafx.scene.input.KeyCode;
-    import javafx.scene.layout.StackPane;
+    import javafx.scene.layout.Pane;
     import javafx.scene.transform.Rotate;
     import javafx.scene.transform.Scale;
     import javafx.scene.transform.Transform;
@@ -21,6 +26,7 @@
 
     import java.io.*;
     import java.nio.file.Files;
+    import java.util.ArrayList;
     import java.util.HashMap;
     import java.util.List;
 
@@ -30,31 +36,21 @@
     public class Presenter3D {
 
         private MyGraph myGraph;
-        private ObjectProperty<MyNode> nodeToBeDeleted;
-        private ObjectProperty<MyEdge> edgeToBeDeleted;
-        private MyNode nodeToBeConnected = null;
-        public DoubleProperty clickedPositionX;
-        public DoubleProperty clickedPositionY;
-        public DoubleProperty clickedPositionZ;
+
         public double draggedPositionX;
         public double draggedPositionY;
         public ObjectProperty<MyExceptionView3D> exceptionProperty;
         public Property<Transform> graphTransforms;
 
-        public ObjectProperty<Sequence> sequenceProperty;
+        public Sequence sequence;
 
         public HashMap<String, Point3D> atomsPosition;
+
+        private IntegerProperty selectedProperty;
 
         public Presenter3D(MyGraph myGraph) {
 
             this.myGraph = myGraph;
-
-            nodeToBeDeleted = new SimpleObjectProperty<>();
-            edgeToBeDeleted = new SimpleObjectProperty<>();
-
-            clickedPositionX = new SimpleDoubleProperty();
-            clickedPositionY = new SimpleDoubleProperty();
-            clickedPositionZ = new SimpleDoubleProperty();
 
             draggedPositionX = 0;
             draggedPositionY = 0;
@@ -63,85 +59,18 @@
 
             graphTransforms = new SimpleObjectProperty<>(new Rotate());
 
-            sequenceProperty = new SimpleObjectProperty<>(new Sequence());
+            sequence = new Sequence();
 
             atomsPosition = new HashMap<>();
 
-            setBindings();
-        }
-
-        private void setBindings() {
-            nodeToBeDeleted.addListener((observable, oldValue, newValue) -> {
-                myGraph.removeNode(newValue);
-            });
-
-            edgeToBeDeleted.addListener((observable, oldValue, newValue) -> {
-                myGraph.removeEdge(newValue);
-            });
-        }
-
-
-        public void setEdgeBindings(MyEdgeView3D myEdgeView3D) {
-            myEdgeView3D.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2) {
-                    nodeToBeConnected = null;
-                    edgeToBeDeleted.setValue(myEdgeView3D.getMyEdge());
-                }
-                event.consume();
-            });
+            selectedProperty = new SimpleIntegerProperty(-1);
 
         }
 
         public void setNodeBindings(MyNodeView3D myNodeView3D) {
 
-            myNodeView3D.setOnMouseDragged(event -> {
-
-                System.out.println("Dragged position: " + draggedPositionX + " " + draggedPositionY);
-
-                double deltaX = event.getSceneX() - draggedPositionX;
-                double deltaY = event.getSceneY() - draggedPositionY;
-
-                System.out.println("Delta: " + deltaX + " " + deltaY);
-
-                myNodeView3D.setXPosition(myNodeView3D.getXPosition() + deltaX);
-                myNodeView3D.setYPosition(myNodeView3D.getYPosition() + deltaY);
-
-                draggedPositionX = event.getSceneX();
-                draggedPositionY = event.getSceneY();
-
-                nodeToBeConnected = null;
-                event.consume();
-
-
-                event.consume();
-            });
-
-            myNodeView3D.setOnMouseReleased(event -> {
-                draggedPositionX = 0;
-                draggedPositionY = 0;
-            });
-
-            myNodeView3D.setOnMousePressed(event -> {
-                draggedPositionX = event.getSceneX();
-                draggedPositionY = event.getSceneY();
-            });
-
             myNodeView3D.setOnMouseClicked(event -> {
-                if (event.isShiftDown()) {
-                    if (nodeToBeConnected == null) {
-                        nodeToBeConnected = myNodeView3D.getMyNode();
-                    } else {
-                        try {
-                            myGraph.connectNodes(nodeToBeConnected, myNodeView3D.getMyNode());
-                        } catch (InvalidEdge invalidEdge) {
-                            invalidEdge.printStackTrace();
-                        }
-                        nodeToBeConnected = null;
-                    }
-                } else if (event.getClickCount() == 2) {
-                    nodeToBeConnected = null;
-                    nodeToBeDeleted.setValue(myNodeView3D.getMyNode());
-                }
+                selectedProperty.setValue( myNodeView3D.getMyNode().getResidualNumber() );
                 event.consume();
             });
 
@@ -167,45 +96,43 @@
 
         }
 
-        public void setSceneBindings(StackPane scene, MyGraphView3D myGraphView3D, PerspectiveCamera perspectiveCamera) {
+        public void setSceneBindings(Pane pane, SubScene subscene, MyGraphView3D myGraphView3D) {
 
             graphTransforms.addListener((observable, oldValue, newValue) -> {
                 myGraphView3D.getTransforms().setAll(newValue);
             });
 
-            scene.setOnKeyPressed(event -> {
+            pane.setOnKeyPressed(event -> {
                 if (event.getCode() == KeyCode.R) {
                     graphTransforms.setValue(new Rotate());
                 }
             });
 
-            scene.setOnScroll(event -> {
+            pane.setOnScroll(event -> {
 
-                double s = 1 + event.getDeltaY() * 0.005;
+                double s;
+                if(event.getDeltaY() > 0) s = 2;
+                else s = 1.0/2;
                 Scale scale = new Scale(s, s, s);
-                scale.pivotXProperty().bind(scene.widthProperty().divide(2));
-                scale.pivotYProperty().bind(scene.heightProperty().divide(2));
+                //scale.pivotXProperty().bind(subscene.widthProperty().divide(2));
+                //scale.pivotYProperty().bind(subscene.heightProperty().divide(2));
                 graphTransforms.setValue(scale.createConcatenation(graphTransforms.getValue()));
-
             });
 
-            scene.setOnMouseReleased(event -> {
+            pane.setOnMouseReleased(event -> {
                 draggedPositionX = 0;
                 draggedPositionY = 0;
             });
 
-            scene.setOnMousePressed(event -> {
+            pane.setOnMousePressed(event -> {
                 draggedPositionX = event.getSceneX();
                 draggedPositionY = event.getSceneY();
             });
 
-            scene.setOnMouseDragged(event -> {
-                System.out.println("Dragged position: " + draggedPositionX + " " + draggedPositionY);
+            pane.setOnMouseDragged(event -> {
 
                 double deltaX = draggedPositionX - event.getSceneX();
                 double deltaY = draggedPositionY - event.getSceneY();
-
-                System.out.println("Delta: " + deltaX + " " + deltaY);
 
                 Transform transform;
 
@@ -217,11 +144,9 @@
                     Point3D perpendicularVector = new Point3D(-deltaY, deltaX, 0);
                     double length = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-                   Rotate r = new Rotate(length, perpendicularVector);
-                    r.pivotXProperty().bind(scene.widthProperty().divide(2));
-                    r.pivotYProperty().bind(scene.heightProperty().divide(2));
-                    transform = r;
-
+                    transform = new Rotate(length, perpendicularVector);
+                    //((Rotate)transform).pivotXProperty().bind(pane.widthProperty().divide(2));
+                    //((Rotate)transform).pivotYProperty().bind(pane.heightProperty().divide(2));
                 }
 
                 graphTransforms.setValue(transform.createConcatenation(graphTransforms.getValue()));
@@ -229,12 +154,18 @@
                 draggedPositionX = event.getSceneX();
                 draggedPositionY = event.getSceneY();
 
-                nodeToBeConnected = null;
                 event.consume();
             });
         }
 
         public void setBindings(SimpleGraphViewer simpleGraphViewer, Stage stage){
+
+            selectedProperty.addListener((observable, oldValue, newValue) -> {
+                simpleGraphViewer.myGraphView3D.unselectNodes((int) oldValue);
+                String text = sequence.getPrimaryToString((int) newValue - 1)  + "\n" + sequence.getSecondaryToString((int) newValue - 1);
+                simpleGraphViewer.textArea.setText( text );
+                simpleGraphViewer.myGraphView3D.selectNodes((int) newValue);
+            });
 
             simpleGraphViewer.loadFile.setOnAction(event -> {
                 FileChooser fileChooser = new FileChooser();
@@ -244,10 +175,51 @@
                 File file = fileChooser.showOpenDialog(stage);
 
                 if(file != null){
-                    sequenceProperty.getValue().clear();
+                    sequence.clear();
+                    myGraph.clear();
                     processPDBFile(file);
                 }
 
+                this.selectedProperty.setValue(-1);
+
+                simpleGraphViewer.myGraphView3D.moveToCenter( new Point3D( simpleGraphViewer.subScene.getWidth()/2, simpleGraphViewer.subScene.getHeight()/2, 0));
+               
+            });
+
+            simpleGraphViewer.c1.setOnAction(event -> {
+                ObservableList<PieChart.Data> pieChartData = FXCollections.observableList( new ArrayList<>() );
+                HashMap<String, Integer> countAminoAcidInSequence = sequence.getCountAminoAcids();
+                for( String key: countAminoAcidInSequence.keySet()){
+                    pieChartData.add( new PieChart.Data( key, countAminoAcidInSequence.get(key) ));
+                }
+                simpleGraphViewer.pieChart.setData(pieChartData);
+            });
+
+            simpleGraphViewer.c2.setOnAction(event -> {
+                ObservableList<PieChart.Data> pieChartData = FXCollections.observableList( new ArrayList<>() );
+                HashMap<String, Integer> countAminoAcidInHelixes = sequence.getCountAminoAcidsInHelixes();
+                for( String key: countAminoAcidInHelixes.keySet()){
+                    pieChartData.add( new PieChart.Data( key, countAminoAcidInHelixes.get(key) ));
+                }
+                simpleGraphViewer.pieChart.setData(pieChartData);
+            });
+
+            simpleGraphViewer.c3.setOnAction(event -> {
+                ObservableList<PieChart.Data> pieChartData = FXCollections.observableList( new ArrayList<>() );
+                HashMap<String, Integer> countAminoAcidInSheets = sequence.getCountAminoAcidsInSheets();
+                for( String key: countAminoAcidInSheets.keySet()){
+                    pieChartData.add( new PieChart.Data( key, countAminoAcidInSheets.get(key) ));
+                }
+                simpleGraphViewer.pieChart.setData(pieChartData);
+            });
+
+            simpleGraphViewer.c4.setOnAction(event -> {
+                ObservableList<PieChart.Data> pieChartData = FXCollections.observableList( new ArrayList<>() );
+                HashMap<String, Integer> countAminoAcidInSequence = sequence.getCountAminoAcids();
+                for( String key: countAminoAcidInSequence.keySet()){
+                    pieChartData.add( new PieChart.Data( key, countAminoAcidInSequence.get(key) ));
+                }
+                simpleGraphViewer.pieChart.setData(pieChartData);
             });
 
             simpleGraphViewer.clear.setOnAction(event -> {
@@ -274,30 +246,58 @@
                     myGraph.clear();
                     simpleGraphViewer.disableAll(false);
                 });
-
-
+                this.selectedProperty.setValue(-1);
+                simpleGraphViewer.textArea.setText("");
                 parallelTransition.play();
             });
 
-            sequenceProperty.getValue().aminoAcids.addListener((InvalidationListener) observable -> {
-                simpleGraphViewer.textArea.setText( sequenceProperty.getValue().toString() );
+            simpleGraphViewer.textArea.setOnMouseClicked(event -> {
+
+                int splitPosition = simpleGraphViewer.textArea.getCaretPosition();
+                int selected = selectedProperty.getValue();
+
+                // clicked in the third part
+                if(splitPosition >= 2*sequence.getPrimaryToString().length() + 3){
+                    splitPosition -= (2*sequence.getPrimaryToString().length() + 3);
+                    if(selected >= 0) {
+                        if (selected <= splitPosition) splitPosition -= 6;
+                        else splitPosition -=4;
+                    }
+                }
+                // clicked in the second part
+                else {
+                    if(splitPosition >= sequence.getPrimaryToString().length() + 2){
+                        splitPosition -= (sequence.getPrimaryToString().length() + 2);
+                        if(selected >= 0) {
+                            if (selected <= splitPosition) splitPosition -= 4;
+                            else splitPosition -=2;
+                        }
+                    }
+                    //clicked first part
+                    else {
+                        if(selected >= 0 && selected <= splitPosition) splitPosition-=2;
+                    }
+                }
+
+                this.selectedProperty.set( splitPosition + 1);
             });
 
-            sequenceProperty.getValue().helixes.addListener((InvalidationListener) observable -> {
-                simpleGraphViewer.textArea.setText( sequenceProperty.getValue().toString() );
+            sequence.aminoAcids.addListener((InvalidationListener) observable -> {
+                simpleGraphViewer.textArea.setText( sequence.toString() );
             });
 
-            sequenceProperty.getValue().sheets.addListener((InvalidationListener) observable -> {
-                simpleGraphViewer.textArea.setText( sequenceProperty.getValue().toString() );
+            sequence.helixes.addListener((InvalidationListener) observable -> {
+                simpleGraphViewer.textArea.setText( sequence.toString() );
+            });
+
+            sequence.sheets.addListener((InvalidationListener) observable -> {
+                simpleGraphViewer.textArea.setText( sequence.toString() );
             });
 
         }
 
         private void processPDBFile(File file) {
             try {
-
-                // getLayoutBound - text area size
-
                 List<String> data = Files.readAllLines(file.toPath());
 
                 String lastOption = "";
@@ -320,7 +320,7 @@
                             max = Integer.parseInt(temp.substring(MyConstants.HELIX_LENGTH_POSITION, MyConstants.HELIX_LENGTH_POSITION + 3).replace(" ",""));
                             id = temp.substring(MyConstants.SEQRED_ID_POSITION, MyConstants.SEQRED_ID_POSITION + 3);
                             for(int i = MyConstants.SEQRES_BEGIN_POSITION; i < MyConstants.SEQRES_END_POSITION; i = i + MyConstants.SEQRES_OFFSET) {
-                                sequenceProperty.getValue().addAminoAcid( new AminoAcid(temp.substring(i, i+3)) );
+                                sequence.addAminoAcid( new AminoAcid(temp.substring(i, i+3)) );
                                 if(++count >= max) break;
                             }
                             break;
@@ -328,41 +328,39 @@
                             id = temp.substring(MyConstants.HELIX_ID_POSITION, MyConstants.HELIX_ID_POSITION + 3);
                             begin = Integer.parseInt(temp.substring(MyConstants.HELIX_BEGIN_POSITION, MyConstants.HELIX_BEGIN_POSITION + 3).replace(" ",""));
                             end = Integer.parseInt(temp.substring(MyConstants.HELIX_END_POSITION, MyConstants.HELIX_END_POSITION + 3).replace(" ",""));
-                            Helix helix = new Helix( id, begin, end );
-                            sequenceProperty.getValue().addHelix( helix );
-                            System.out.println(helix.toString());
+                            Helix helix = new Helix( id, begin - 1, end );
+                            sequence.addHelix( helix );
                             break;
                         case "SHEET ":
                             id = temp.substring(MyConstants.SHEET_ID_POSITION, MyConstants.SHEET_ID_POSITION + 3);
                             if(!lastID.equals(id) || !lastOption.equals(option)){
                                 sheet = new Sheet();
-                                sequenceProperty.getValue().addSheet(sheet);
+                                sequence.addSheet(sheet);
                             }
                             begin = Integer.parseInt(temp.substring(MyConstants.STRAND_BEGIN_POSITION, MyConstants.STRAND_BEGIN_POSITION + 3).replace(" ",""));
                             end = Integer.parseInt(temp.substring(MyConstants.STRAND_END_POSITION, MyConstants.STRAND_END_POSITION + 3).replace(" ",""));
-                            Strand strand = new Strand ( id, begin, end );
+                            Strand strand = new Strand ( id, begin - 1, end );
                             sheet.addStrand( strand );
                             break;
                         case "ATOM  ":
                             id = temp.substring(MyConstants.ATOM_ID_POSITION, MyConstants.ATOM_ID_POSITION + 4);
                             String atomType = temp.substring(MyConstants.ATOM_TYPE_POSITION, MyConstants.ATOM_TYPE_POSITION + 3).replace(" ","");
+                            int residualNumber = Integer.parseInt(temp.substring(MyConstants.ATOM_RESIDUAL_POSITION, MyConstants.ATOM_RESIDUAL_POSITION + 3).replace(" ",""));
                             double X = Double.parseDouble(temp.substring(MyConstants.ATOM_X_POSITION, MyConstants.ATOM_X_POSITION + 7).replace(" ",""));
                             double Y = Double.parseDouble(temp.substring(MyConstants.ATOM_Y_POSITION, MyConstants.ATOM_Y_POSITION + 7).replace(" ",""));
                             double Z = Double.parseDouble(temp.substring(MyConstants.ATOM_Z_POSITION, MyConstants.ATOM_Z_POSITION + 7).replace(" ",""));
                             MyNode myNode;
                             try{
-                                myNode = new MyNode ( id, atomType );
+                                myNode = new MyNode ( id, atomType, residualNumber );
                                 atomsPosition.put(id, new Point3D(X, Y, Z));
                                 auxConnection.put(myNode.getAtomInfo().getType(), myNode);
                                 myGraph.addNode( myNode );
-                                myGraph.connectNodes(  auxConnection.get(myNode.getAtomInfo().connectTo()), myNode );
-                            }
-                            catch(InvalidAtomType e){
-                                // break;
-                            }
-                            catch (Exception e) {
+                                // First line of ATOM has no one to connect to.
+                                if(lastOption.equals(option)){
+                                    myGraph.connectNodes( auxConnection.get(myNode.getAtomInfo().connectTo()), myNode );
+                                }
+                            } catch (Exception e) {
                                 // TODO: 1/20/17
-                                // System.out.println(auxConnection.toString());
                                 // e.printStackTrace();
                             }
                             break;

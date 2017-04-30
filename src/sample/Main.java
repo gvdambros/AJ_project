@@ -1,31 +1,29 @@
 package sample;
 
-import graph.MyGraph;
-import graphview3d.SimpleGraphViewer;
+import model.Protein;
+import gui.SimpleProteinViewer;
 import javafx.application.Application;
 import javafx.scene.*;
 import javafx.stage.Stage;
-import presenter3d.Presenter3D;
+import presenter.Presenter3D;
 
 
 public class Main extends Application {
 
-    @Override
     public void start(Stage primaryStage) throws Exception {
 
-        MyGraph myGraph = new MyGraph();
+        Protein protein = new Protein();
 
-        Presenter3D presenter3D = new Presenter3D(myGraph);
+        Presenter3D presenter3D = new Presenter3D(protein);
 
-        SimpleGraphViewer simpleGraphViewer = new SimpleGraphViewer(myGraph, presenter3D, primaryStage);
+        SimpleProteinViewer simpleProteinViewer = new SimpleProteinViewer(protein, presenter3D, primaryStage);
 
-        Scene scene = new Scene(simpleGraphViewer, 800, 800);
+        Scene scene = new Scene(simpleProteinViewer, 600, 800);
 
-        primaryStage.setTitle("Hello World");
+        primaryStage.setTitle("Simple Protein Viewer");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-
 
     public static void main(String[] args) {
         launch(args);

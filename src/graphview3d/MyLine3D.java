@@ -16,8 +16,7 @@ public class MyLine3D extends Group{
     public MyLine3D(DoubleProperty startXProperty, DoubleProperty startYProperty, DoubleProperty startZProperty,
                     DoubleProperty endXProperty, DoubleProperty endYProperty, DoubleProperty endZProperty, Color color){
 
-        System.out.println(startXProperty.getValue() + " " + startYProperty.getValue()+ " " +startZProperty.getValue() +
-                " " +endXProperty.getValue()+ " " +endYProperty.getValue()+ " " +endZProperty.getValue()+ " ");
+        //System.out.println(startXProperty.getValue() + " " + startYProperty.getValue()+ " " +startZProperty.getValue() + " " +endXProperty.getValue()+ " " +endYProperty.getValue()+ " " +endZProperty.getValue()+ " ");
 
         Cylinder cylinder = new Cylinder();
         Point3D point = new Point3D(endXProperty.getValue() - startXProperty.getValue(), endYProperty.getValue() - startYProperty.getValue(), endZProperty.getValue() - startZProperty.getValue());
@@ -43,7 +42,7 @@ public class MyLine3D extends Group{
 
         cylinder.setHeight(length);
 
-        cylinder.setRadius(5);
+        cylinder.setRadius(0.25);
 
         this.getChildren().add(cylinder);
 

@@ -1,19 +1,20 @@
-package graph;
+package model.sequence;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by gvdambros on 1/14/17.
  */
 public class Sequence {
 
-    public ObservableList<AminoAcid> aminoAcids;
-    public ObservableList<Helix> helixes;
-    public ObservableList<Sheet> sheets;
+    private ObservableList<AminoAcid> aminoAcids;
+    private ObservableList<Helix> helixes;
+    private ObservableList<Sheet> sheets;
 
     public Sequence(){
         helixes = FXCollections.observableList(new ArrayList<>());
@@ -51,6 +52,14 @@ public class Sequence {
         return selectInString( getPrimaryToString(), splitPosition);
     }
 
+    public ObservableList<Helix> getHelixes() {
+        return helixes;
+    }
+
+    public ObservableList<Sheet> getSheets() {
+        return sheets;
+    }
+
     private String selectInString(String string, int splitPosition){
         return string.substring(0,splitPosition ) + "(" + string.substring(splitPosition, splitPosition + 1) + ")" + string.substring(splitPosition + 1, string.length());
     }
@@ -71,7 +80,7 @@ public class Sequence {
     private String sheetsToString() {
         char[] aux = new char[aminoAcids.size()];
         for(Sheet sheet: sheets){
-            for(Strand strand: sheet.strands){
+            for(Strand strand: sheet.getStrands()){
                 for(int i = strand.begin; i < strand.end; i++){
                     aux[i] = 'E';
                 }
@@ -89,7 +98,6 @@ public class Sequence {
         }
         return new String(aux).replace('\0','-');
     }
-
 
     public void clear() {
         helixes.clear();
@@ -142,4 +150,26 @@ public class Sequence {
         }
         return countAminoAcids;
     }
+
+    public int length() {
+        return aminoAcids.size();
+    }
+
+    public AminoAcid getAminoAcid(int i){
+        return aminoAcids.get(i);
+    }
+
+    public ObservableList<AminoAcid> getAminoAcids() {
+        return aminoAcids;
+    }
+
+    public boolean[] maskAminoAcids(){
+        String aux = getSecondaryToString();
+        boolean[] mask = new boolean[aux.length()];
+        for(int i = 0; i< aux.length(); i++){
+            mask[i] = aux.charAt(i) == '-';
+        }
+        return mask;
+    }
+
 }

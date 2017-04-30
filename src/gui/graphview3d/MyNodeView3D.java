@@ -1,18 +1,15 @@
-package graphview3d;
+package gui.graphview3d;
 
-import graph.MyNode;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.FloatProperty;
-import javafx.beans.property.SimpleDoubleProperty;
+import model.graph.MyNode;
+import javafx.beans.property.FloatProperty;
+import javafx.beans.property.SimpleFloatProperty;
 import javafx.geometry.Point3D;
 import javafx.scene.Group;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Material;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Sphere;
-
-import java.util.Random;
 
 /**
  * Created by gvdambros on 12/10/16.
@@ -20,9 +17,11 @@ import java.util.Random;
 public class MyNodeView3D extends Group {
 
     private MyNode myNode;
-    private DoubleProperty xPosition, yPosition, zPosition;
-    private Sphere sphere;
+    private FloatProperty xPosition, yPosition, zPosition;
+    public Sphere sphere;
+
     private Material naturalMaterial;
+    public double naturalSize;
 
     public MyNodeView3D(MyNode myNode, Point3D position) {
         this.myNode = myNode;
@@ -32,13 +31,15 @@ public class MyNodeView3D extends Group {
         phongMaterial.setDiffuseColor( color.darker() );
         phongMaterial.setSpecularColor( color.brighter() );
         naturalMaterial = phongMaterial;
+        naturalSize = myNode.getAtomInfo().getSize();
 
         this.sphere = new Sphere( myNode.getAtomInfo().getSize() );
+
         sphere.setMaterial(phongMaterial);
 
-        xPosition = new SimpleDoubleProperty(position.getX());
-        yPosition = new SimpleDoubleProperty(position.getY());
-        zPosition = new SimpleDoubleProperty(position.getZ());
+        xPosition = new SimpleFloatProperty((float) position.getX());
+        yPosition = new SimpleFloatProperty((float) position.getY());
+        zPosition = new SimpleFloatProperty((float) position.getZ());
 
         this.getChildren().add(sphere);
 
@@ -55,15 +56,15 @@ public class MyNodeView3D extends Group {
         return myNode;
     }
 
-    public DoubleProperty xPositionProperty() {
+    public FloatProperty xPositionProperty() {
         return xPosition;
     }
 
-    public DoubleProperty yPositionProperty() {
+    public FloatProperty yPositionProperty() {
         return yPosition;
     }
 
-    public DoubleProperty zPositionProperty() {
+    public FloatProperty zPositionProperty() {
         return zPosition;
     }
 
@@ -71,27 +72,27 @@ public class MyNodeView3D extends Group {
         return new Point3D(getXPosition(), getYPosition(), getZPosition() );
     }
 
-    public double getXPosition() {
+    public float getXPosition() {
         return xPosition.get();
     }
 
-    public void setXPosition(double xPosition) {
+    public void setXPosition(float xPosition) {
         this.xPosition.set(xPosition);
     }
 
-    public double getYPosition() {
+    public float getYPosition() {
         return yPosition.get();
     }
 
-    public void setYPosition(double yPosition) {
+    public void setYPosition(float yPosition) {
         this.yPosition.set(yPosition);
     }
 
-    public double getZPosition() {
+    public float getZPosition() {
         return zPosition.get();
     }
 
-    public void setZPosition(double zPosition) {
+    public void setZPosition(float zPosition) {
         this.zPosition.set(zPosition);
     }
 

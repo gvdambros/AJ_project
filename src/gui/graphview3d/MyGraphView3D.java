@@ -1,23 +1,17 @@
-package graphview3d;
+package gui.graphview3d;
 
+import javafx.beans.property.*;
 import javafx.geometry.Point3D;
-import javafx.scene.effect.Light;
 import javafx.scene.paint.Color;
-import javafx.scene.transform.Translate;
-import presenter3d.Presenter3D;
-import graph.MyEdge;
-import graph.MyGraph;
-import graph.MyNode;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import model.graph.MyRibbon;
+import presenter.Presenter3D;
+import model.graph.MyEdge;
+import model.graph.MyGraph;
+import model.graph.MyNode;
 import javafx.collections.ListChangeListener;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
-
-import java.io.IOException;
 
 /**
  * Created by gvdambros on 12/10/16.
@@ -26,6 +20,10 @@ public class MyGraphView3D extends Group{
 
     public Group edgeViewGroup;
     public Group nodeViewGroup;
+    public Group ribbonViewGroup;
+    public Group helixViewGroup;
+
+    public DoubleProperty baseNodeSize, baseEdgeSize;
 
     ObjectProperty<MyExceptionView3D> exceptionProperty;
 
@@ -37,7 +35,16 @@ public class MyGraphView3D extends Group{
         nodeViewGroup = new Group();
         this.getChildren().add(nodeViewGroup);
 
+        ribbonViewGroup = new Group();
+        this.getChildren().add(ribbonViewGroup);
+
+        helixViewGroup = new Group();
+        this.getChildren().add(helixViewGroup);
+
         exceptionProperty = new SimpleObjectProperty<>();
+
+        baseNodeSize = new SimpleDoubleProperty();
+        baseEdgeSize = new SimpleDoubleProperty();
 
         init(myGraph, presenter3D);
 
@@ -56,7 +63,7 @@ public class MyGraphView3D extends Group{
         }
         for (MyEdge temp: myGraph.getObservableEdges()){
             try {
-                addMyEdgeView3D(temp, presenter3D);
+                addMyEdgeView3D(temp);
             } catch (MyExceptionView3D myExceptionView3D) {
                 MyAlertView3D myAlertView3D = new MyAlertView3D(Alert.AlertType.ERROR, myExceptionView3D.getMessage());
                 myAlertView3D.showAndWait();
@@ -80,7 +87,7 @@ public class MyGraphView3D extends Group{
                     try{
                         if(c.wasAdded()){
                             for (MyEdge temp: c.getAddedSubList()) {
-                                addMyEdgeView3D(temp, presenter3D);
+                                addMyEdgeView3D(temp);
                             }
                         }
                         else if(c.wasRemoved()){
@@ -120,7 +127,74 @@ public class MyGraphView3D extends Group{
             }
         });
 
+        myGraph.getObservableRibbons().addListener(new ListChangeListener<MyRibbon>() {
+            @Override
+            public void onChanged(Change<? extends MyRibbon> c) {
+                while ( c.next() ) {
+                    try {
+                        if (c.wasAdded()) {
+                            for (MyRibbon temp : c.getAddedSubList()) {
+                                addMyRibbonView3D(temp, presenter3D);
+                            }
 
+                        } else if (c.wasRemoved()) {
+                            for (MyRibbon temp : c.getRemoved()) {
+                                deleteMyRibbonView3D(getMyRibbonView3D(temp));
+                            }
+                        }
+
+                    } catch (MyExceptionView3D e) {
+                        MyAlertView3D myAlertView3D = new MyAlertView3D(Alert.AlertType.ERROR, e.getMessage());
+                        myAlertView3D.showAndWait();
+                    }
+                }
+            }
+        });
+
+        myGraph.getObservableHelixes().addListener(new ListChangeListener<MyEdge>() {
+            @Override
+            public void onChanged(Change<? extends MyEdge> c) {
+                while( c.next() ){
+                    try{
+                        if(c.wasAdded()){
+                            for (MyEdge temp: c.getAddedSubList()) {
+                                addMyHelixView3D(temp);
+                            }
+                        }
+                        else if(c.wasRemoved()){
+                            for(MyEdge temp: c.getRemoved()){
+                                deleteMyHelixView3D( getMyHelixView3D(temp) );
+                            }
+                        }
+                    } catch (MyExceptionView3D e) {
+                        MyAlertView3D myAlertView3D = new MyAlertView3D(Alert.AlertType.ERROR, e.getMessage());
+                        myAlertView3D.showAndWait();
+                    }
+                }
+            }
+        });
+    }
+
+    private MyEdgeView3D getMyHelixView3D(MyEdge myEdge) throws MyExceptionView3D {
+        for(Node temp: helixViewGroup.getChildren()){
+            if(temp instanceof MyEdgeView3D){
+                if( ((MyEdgeView3D) temp).getMyEdge().equals(myEdge)){
+                    return (MyEdgeView3D) temp;
+                }
+            }
+        }
+        throw new MyExceptionView3D("This helix is not in present in the Graph.");
+    }
+
+    private MyRibbonView3D getMyRibbonView3D(MyRibbon myRibbon) throws MyExceptionView3D {
+        for(Node temp: ribbonViewGroup.getChildren()){
+            if(temp instanceof MyRibbonView3D){
+                if( ((MyRibbonView3D) temp).getMyRibbon().equals(myRibbon)){
+                    return (MyRibbonView3D) temp;
+                }
+            }
+        }
+        throw new MyExceptionView3D("This ribbon is not in present in the Graph.");
     }
 
     private MyNodeView3D getMyNodeView3D(MyNode myNode) throws MyExceptionView3D {
@@ -145,18 +219,37 @@ public class MyGraphView3D extends Group{
         throw new MyExceptionView3D("This edge is not in present in the Graph.");
     }
 
+    private void addMyRibbonView3D(MyRibbon myRibbon, Presenter3D presenter3D) throws MyExceptionView3D {
+        MyRibbonView3D myRibbonView3D = new MyRibbonView3D( myRibbon,
+                getMyNodeView3D(myRibbon.getCa()), getMyNodeView3D(myRibbon.getCb()),
+                getMyNodeView3D(myRibbon.getNca()), getMyNodeView3D(myRibbon.getNcb())
+        );
+        ribbonViewGroup.getChildren().add(myRibbonView3D);
+    }
+
     public void addMyNodeView3D(MyNode myNode, Presenter3D presenter3D){
         MyNodeView3D myNodeView3D = new MyNodeView3D(myNode, presenter3D.atomsPosition.get(myNode.getID()));
+        myNodeView3D.sphere.radiusProperty().bind( baseNodeSize.multiply( myNodeView3D.naturalSize )  );
         nodeViewGroup.getChildren().add(myNodeView3D);
         presenter3D.setNodeBindings(myNodeView3D);
     }
 
-    public void addMyEdgeView3D(MyEdge myEdge, Presenter3D presenter3D) throws MyExceptionView3D {
+    public void addMyEdgeView3D(MyEdge myEdge) throws MyExceptionView3D {
         MyNodeView3D sourceView3D = getMyNodeView3D( myEdge.getSource() );
         MyNodeView3D targetView3D = getMyNodeView3D( myEdge.getTarget() );
-        MyEdgeView3D myEdgeView3D = new MyEdgeView3D(myEdge, sourceView3D, targetView3D);
+        MyEdgeView3D myEdgeView3D = new MyEdgeView3D(myEdge, sourceView3D, targetView3D, 0.25f, Color.BLACK);
+        myEdgeView3D.radiusProperty.bind( baseEdgeSize );
         edgeViewGroup.getChildren().add(myEdgeView3D);
     }
+
+    public void addMyHelixView3D(MyEdge myEdge) throws MyExceptionView3D {
+        MyNodeView3D sourceView3D = getMyNodeView3D( myEdge.getSource() );
+        MyNodeView3D targetView3D = getMyNodeView3D( myEdge.getTarget() );
+        MyEdgeView3D myEdgeView3D = new MyEdgeView3D(myEdge, sourceView3D, targetView3D, 1f, Color.PURPLE);
+        helixViewGroup.getChildren().add(myEdgeView3D);
+    }
+
+    private void deleteMyHelixView3D(MyEdgeView3D myHelixView3D) { helixViewGroup.getChildren().remove(myHelixView3D); }
 
     private void deleteMyNodeView3D(MyNodeView3D myNodeView3D) {
         nodeViewGroup.getChildren().remove(myNodeView3D);
@@ -165,6 +258,8 @@ public class MyGraphView3D extends Group{
     private void deleteMyEdgeView3D(MyEdgeView3D myEdgeView3D) {
         edgeViewGroup.getChildren().remove(myEdgeView3D);
     }
+
+    private void deleteMyRibbonView3D(MyRibbonView3D myRibbonView3D) { ribbonViewGroup.getChildren().remove(myRibbonView3D); }
 
     public void selectNodes(int residualNumber){
         for(Node temp: nodeViewGroup.getChildren()){
@@ -203,17 +298,12 @@ public class MyGraphView3D extends Group{
 
         Point3D centroid = centroid();
 
-        System.out.println(" aqui " + center);
-        System.out.println(centroid);
-        System.out.println(center.subtract(centroid()));
-
-
         Point3D direction = center.subtract(centroid());
         for(Node temp: nodeViewGroup.getChildren()){
             MyNodeView3D mn = ((MyNodeView3D) temp);
-            mn.setXPosition(mn.getXPosition() - centroid.getX());
-            mn.setYPosition(mn.getYPosition() - centroid.getY());
-            mn.setZPosition(mn.getZPosition() - centroid.getZ());
+            mn.setXPosition((float)(mn.getXPosition() - centroid.getX()) );
+            mn.setYPosition((float)(mn.getYPosition() - centroid.getY()));
+            mn.setZPosition((float)(mn.getZPosition() - centroid.getZ()));
         }
 
         this.setTranslateX(center.getX());

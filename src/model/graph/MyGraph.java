@@ -1,13 +1,9 @@
-package graph;
+package model.graph;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 
-import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
 
 
@@ -19,11 +15,14 @@ public class MyGraph {
 
     private ObservableList<MyEdge> edges;
     private ObservableList<MyNode> nodes;
-
+    private ObservableList<MyRibbon> ribbons;
+    private ObservableList<MyEdge> helixes;
 
     public MyGraph() {
         edges = FXCollections.observableList(new ArrayList<>());
         nodes = FXCollections.observableList(new ArrayList<>());
+        ribbons = FXCollections.observableList(new ArrayList<>());
+        helixes = FXCollections.observableList(new ArrayList<>());
     }
 
     public void addNode( MyNode newNode ){ nodes.add(newNode);}
@@ -78,10 +77,6 @@ public class MyGraph {
         return true;
     }
 
-    public void disconnectNodes(MyNode source, MyNode target){
-
-    }
-
     private boolean isParallelEdge(MyNode source, MyNode target){
         for(MyEdge temp: edges){
             if( temp.isEqual(source, target) ){
@@ -106,6 +101,8 @@ public class MyGraph {
         return nodes.size();
     }
 
+    public int numberOfRibbons(){ return ribbons.size(); }
+
     public ObservableList<MyEdge> getObservableEdges() {
         return edges;
     }
@@ -114,9 +111,17 @@ public class MyGraph {
         return nodes;
     }
 
+    public ObservableList<MyRibbon> getObservableRibbons() {
+        return ribbons;
+    }
+
+    public ObservableList<MyEdge> getObservableHelixes() { return helixes; }
+
     public void clear() {
         edges.clear();
         nodes.clear();
+        ribbons.clear();
+        helixes.clear();
     }
 
     public List<MyNode> getNodesByResidualNumber(int residualNumber){
@@ -128,5 +133,19 @@ public class MyGraph {
         }
         return myNodeList;
     }
+
+    public void addRibbon(MyRibbon myRibbon) {
+        ribbons.add(myRibbon);
+    }
+
+    public void addHelix(MyNode source, MyNode target) throws InvalidEdge {
+        MyEdge myEdge = new MyEdge(source, target);
+        if( isValidEdge( myEdge ) ) {
+            myEdge.getTarget().addInEdge(myEdge);
+            myEdge.getSource().addOutEdge(myEdge);
+            helixes.add(myEdge);
+        }
+    }
+
 }
 

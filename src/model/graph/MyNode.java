@@ -1,5 +1,7 @@
-package graph;
+package model.graph;
 
+import model.sequence.AtomInfo;
+import model.sequence.InvalidAtomType;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,7 +19,6 @@ public class MyNode {
 
 
     private int residualNumber;
-    private Property<Object> userData;
 
     private ObservableList<MyEdge> outEdges;
     private ObservableList<MyEdge> inEdges;
